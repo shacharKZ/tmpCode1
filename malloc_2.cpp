@@ -2,31 +2,29 @@
 // Created by student on 1/13/21.
 //
 #include <unistd.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <string.h>
-using namespace std;
 
 struct MallocMetadata {
     size_t  size;
     bool is_free;
     MallocMetadata* next;
     MallocMetadata* prev;
-
 };
 
 MallocMetadata* first_node = NULL;
 
 void* smalloc(size_t size) {
-    if (size <= 0 or size > 10e8) {
+    if (size == 0 || size > 1e8) {
         return NULL;
     }
 
     MallocMetadata* curr_node = first_node;
     MallocMetadata* prev_node = NULL;
     while (curr_node) {
-        if (curr_node->is_free && curr_node->size <= size) {
+        if (curr_node->is_free && curr_node->size >= size) {
             curr_node->is_free = false;
-            return (void*)(curr_node+sizeof((void*)curr_node));
+            return (void*)((size_t)curr_node+sizeof(MallocMetadata));
         }
         prev_node = curr_node;
         curr_node = curr_node->next;
@@ -43,7 +41,11 @@ void* smalloc(size_t size) {
     if (prev_node) {
         prev_node->next = curr_node;
     }
-    return (void*)((size_t )res+sizeof((void*)curr_node));
+    else {
+        first_node = curr_node;
+        first_node->prev = NULL;
+    }
+    return (void*)((size_t)res+sizeof(MallocMetadata));
 }
 
 
@@ -68,16 +70,25 @@ void sfree(void* p) {
 
 
 void* srealloc(void* oldp, size_t size) {
-    auto *mm = (MallocMetadata *) ((size_t) oldp - sizeof(MallocMetadata));
-    if (mm->size < size) {
-        void* res = smalloc(size);
-        if (res && oldp) {
-            memcpy(res,oldp,size);
-            sfree(oldp);
-        }
-        return res;
+    if (size == 0 || size > 1e8) {
+        return NULL;
     }
-    return oldp;
+    if (!oldp) {
+        return smalloc(size);
+    }
+
+    auto *mm = (MallocMetadata *) ((size_t) oldp - sizeof(MallocMetadata));
+    if (size <= mm->size) {
+        mm->is_free = false;
+        return oldp;
+    }
+
+    void* res = smalloc(size);
+    if (res) {
+        memcpy(res, oldp, mm->size);
+        sfree(oldp);
+    }
+    return res;
 }
 
 

@@ -157,6 +157,11 @@ void test_malloc_then_free() {
 	/* Allocate block 0 and fill with data */
 	p[0] = static_cast<byte*>(smalloc(BLOCK_SIZES[0]));
 	add_expected_block(expected, BLOCK_SIZES[0]);
+//	cout << initial.allocated_blocks << " vs " << expected.allocated_blocks << endl; // TODO
+//	cout << initial.allocated_bytes << " vs " << expected.allocated_bytes << endl;
+//	cout << initial.meta_data_bytes << " vs " << expected.meta_data_bytes << endl;
+//	cout << initial.free_bytes << " vs " << expected.free_blocks << endl;
+//	cout << initial.free_blocks << " vs " << expected.free_blocks << endl;
 	assert_state(initial, expected);
 	for (int j=0; j<BLOCK_SIZES[0]; ++j)
 		*(p[0]+j) = DATA[0][j];
